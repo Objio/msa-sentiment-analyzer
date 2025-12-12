@@ -1,0 +1,131 @@
+name: CD - Deploy to GCP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  GCP_REGION: us-central1
+  REGISTRY: us-central1-docker.pkg.dev
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build and Push Docker Images
+        run: |
+          SERVICES=("ingestion" "sentiment-analysis" "aggregation" "api" "monitoring")
+
+          for service in "${SERVICES[@]}"; do
+            IMAGE_NAME="${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/msa-images/msa-$service:${{ github.sha }}"
+            IMAGE_LATEST="${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/msa-images/msa-$service:latest"
+            
+            echo "Building $service..."
+            docker build -t $IMAGE_NAME -t $IMAGE_LATEST -f services/$service/Dockerfile .
+            
+            echo "Pushing $service..."
+            docker push $IMAGE_NAME
+            docker push $IMAGE_LATEST
+          done
+
+      - name: Deploy to Cloud Run - Ingestion
+        run: |
+          gcloud run deploy msa-ingestion \
+            --image=${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/msa-images/msa-ingestion:${{ github.sha }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --service-account=msa-ingestion-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --set-env-vars="GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},BIGQUERY_DATASET=msa_${{ github.event.inputs.environment || 'production' }}"
+
+      - name: Deploy to Cloud Run - Sentiment Analysis
+        run: |
+          gcloud run deploy msa-sentiment-analysis \
+            --image=${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/msa-images/msa-sentiment-analysis:${{ github.sha }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --no-allow-unauthenticated \
+            --service-account=msa-sentiment-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --set-secrets="GEMINI_API_KEY=gemini-api-key:latest" \
+            --min-instances=1 \
+            --max-instances=50 \
+            --memory=1Gi \
+            --cpu=2
+
+      - name: Deploy to Cloud Run - Aggregation
+        run: |
+          gcloud run deploy msa-aggregation \
+            --image=${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/msa-images/msa-aggregation:${{ github.sha }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --no-allow-unauthenticated \
+            --service-account=msa-aggregation-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --min-instances=1
+
+      - name: Deploy to Cloud Run - API
+        run: |
+          gcloud run deploy msa-api \
+            --image=${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/msa-images/msa-api:${{ github.sha }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --service-account=msa-api-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --min-instances=1
+
+      - name: Deploy to Cloud Run - Monitoring
+        run: |
+          gcloud run deploy msa-monitoring \
+            --image=${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/msa-images/msa-monitoring:${{ github.sha }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --no-allow-unauthenticated \
+            --service-account=msa-monitoring-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --min-instances=1
+
+      - name: Run Smoke Tests
+        run: |
+          INGESTION_URL=$(gcloud run services describe msa-ingestion --region=${{ env.GCP_REGION }} --format="value(status.url)")
+          API_URL=$(gcloud run services describe msa-api --region=${{ env.GCP_REGION }} --format="value(status.url)")
+
+          echo "Testing Ingestion Service..."
+          curl -f $INGESTION_URL/health || exit 1
+
+          echo "Testing API Service..."
+          curl -f $API_URL/health || exit 1
+
+          echo "All smoke tests passed!"
+
+      - name: Notify Deployment Success
+        if: success()
+        run: echo "✅ Deployment to ${{ github.event.inputs.environment || 'production' }} completed successfully!"
+
+      - name: Notify Deployment Failure
+        if: failure()
+        run: echo "❌ Deployment failed! Check logs for details."
