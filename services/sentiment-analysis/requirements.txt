@@ -1,0 +1,6 @@
+google-cloud-pubsub==2.18.4
+google-cloud-bigquery==3.13.0
+google-generativeai==0.3.2
+pydantic==2.5.0
+structlog==23.2.0
+tenacity==8.2.3
