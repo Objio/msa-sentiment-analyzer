@@ -265,7 +265,7 @@ module "cloud_run" {
       image               = "gcr.io/${var.project_id}/msa-sentiment-analysis:latest"
       service_account     = module.iam.service_accounts["sentiment_analysis"].email
       max_instances       = 50
-      min_instances       = 1
+      min_instances       = 0  # Pay-per-use: scales to zero when idle
       cpu                 = "2"
       memory              = "1Gi"
       timeout             = "600s"
@@ -285,7 +285,7 @@ module "cloud_run" {
       image               = "gcr.io/${var.project_id}/msa-aggregation:latest"
       service_account     = module.iam.service_accounts["aggregation"].email
       max_instances       = 20
-      min_instances       = 1
+      min_instances       = 0  # Pay-per-use: scales to zero when idle
       cpu                 = "1"
       memory              = "512Mi"
       timeout             = "300s"
@@ -304,7 +304,7 @@ module "cloud_run" {
       image               = "gcr.io/${var.project_id}/msa-api:latest"
       service_account     = module.iam.service_accounts["api"].email
       max_instances       = 50
-      min_instances       = 1
+      min_instances       = 0  # Pay-per-use: scales to zero when idle
       cpu                 = "1"
       memory              = "512Mi"
       timeout             = "60s"
@@ -320,10 +320,10 @@ module "cloud_run" {
     
     monitoring = {
       name                = "msa-monitoring"
-      image               = "gcr.io/${var.project_id}/msa-monitoring:latest"
+      image               = "us-docker.pkg.dev/cloudrun/container/hello"
       service_account     = module.iam.service_accounts["monitoring"].email
       max_instances       = 5
-      min_instances       = 1
+      min_instances       = 0  # Pay-per-use: scales to zero when idle
       cpu                 = "1"
       memory              = "256Mi"
       timeout             = "60s"

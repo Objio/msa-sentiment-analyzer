@@ -5,6 +5,12 @@ variable "project_id" {
   type        = string
 }
 
+variable "min_instances" {
+  description = "Minimum number of instances"
+  type        = number
+  default     = 0  # Changed to 0 for pay-per-use (no idle costs)
+}
+
 variable "region" {
   description = "GCP Region"
   type        = string
