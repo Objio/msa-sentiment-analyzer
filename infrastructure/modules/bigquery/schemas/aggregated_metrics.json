@@ -1,0 +1,152 @@
+[
+    {
+        "name": "metric_id",
+        "type": "STRING",
+        "mode": "REQUIRED",
+        "description": "Unique identifier for metric"
+    },
+    {
+        "name": "tenant_id",
+        "type": "STRING",
+        "mode": "REQUIRED",
+        "description": "Tenant identifier"
+    },
+    {
+        "name": "aggregation_level",
+        "type": "STRING",
+        "mode": "REQUIRED",
+        "description": "Aggregation level (hourly, daily, weekly, monthly)"
+    },
+    {
+        "name": "period_start",
+        "type": "TIMESTAMP",
+        "mode": "REQUIRED",
+        "description": "Start of aggregation period"
+    },
+    {
+        "name": "period_end",
+        "type": "TIMESTAMP",
+        "mode": "REQUIRED",
+        "description": "End of aggregation period"
+    },
+    {
+        "name": "dimensions",
+        "type": "JSON",
+        "mode": "NULLABLE",
+        "description": "Grouping dimensions"
+    },
+    {
+        "name": "total_texts",
+        "type": "INT64",
+        "mode": "REQUIRED",
+        "description": "Total texts in period"
+    },
+    {
+        "name": "total_positive",
+        "type": "INT64",
+        "mode": "NULLABLE",
+        "description": "Count of positive sentiments"
+    },
+    {
+        "name": "total_negative",
+        "type": "INT64",
+        "mode": "NULLABLE",
+        "description": "Count of negative sentiments"
+    },
+    {
+        "name": "total_neutral",
+        "type": "INT64",
+        "mode": "NULLABLE",
+        "description": "Count of neutral sentiments"
+    },
+    {
+        "name": "total_mixed",
+        "type": "INT64",
+        "mode": "NULLABLE",
+        "description": "Count of mixed sentiments"
+    },
+    {
+        "name": "avg_sentiment_score",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Average sentiment score"
+    },
+    {
+        "name": "median_sentiment_score",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Median sentiment score"
+    },
+    {
+        "name": "stddev_sentiment_score",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Standard deviation of sentiment scores"
+    },
+    {
+        "name": "avg_emotion_joy",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Average joy emotion"
+    },
+    {
+        "name": "avg_emotion_anger",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Average anger emotion"
+    },
+    {
+        "name": "avg_emotion_sadness",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Average sadness emotion"
+    },
+    {
+        "name": "avg_emotion_fear",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Average fear emotion"
+    },
+    {
+        "name": "avg_emotion_surprise",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Average surprise emotion"
+    },
+    {
+        "name": "total_toxic",
+        "type": "INT64",
+        "mode": "NULLABLE",
+        "description": "Count of toxic texts"
+    },
+    {
+        "name": "toxicity_rate",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Percentage of toxic texts"
+    },
+    {
+        "name": "sentiment_trend",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Trend indicator (improving, declining, stable)"
+    },
+    {
+        "name": "trend_score",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Trend magnitude"
+    },
+    {
+        "name": "computed_at",
+        "type": "TIMESTAMP",
+        "mode": "REQUIRED",
+        "description": "When metrics were computed"
+    },
+    {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "mode": "REQUIRED",
+        "description": "Record creation timestamp"
+    }
+]
